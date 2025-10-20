@@ -1,0 +1,40 @@
+[project]
+name = "aws-parameter-store-manager"
+version = "0.1.0"
+description = "Python library to manage the AWS Parameter Store"
+authors = [
+    {name = "Maalik Kaufhold",email = "mail@maalikaufhold.de"}
+]
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "boto3 (>=1.40.55,<2.0.0)",
+]
+
+[tool.poetry]
+packages = [{include = "aws_parameter_store_manager", from = "src"}]
+
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.14.1"
+pre-commit = "^4.3.0"
+bandit = "^1.8.6"
+
+
+[tool.poetry.group.stubs.dependencies]
+boto3-stubs = "^1.40.55"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 96
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true
+docstring-code-line-length = 30
+skip-magic-trailing-comma = false
+line-ending = "auto"
