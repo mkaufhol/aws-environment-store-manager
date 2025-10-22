@@ -94,8 +94,9 @@ class ParameterStoreManager:
 
         return response["Parameter"]["Value"]
 
-    def create_parameter(
+    def _put_parameter(
         self,
+        overwrite: bool,
         parameter: str,
         value: str,
         parameter_type: Literal["String", "StringList", "SecureString"] = "String",
@@ -105,22 +106,23 @@ class ParameterStoreManager:
         tags: Optional[list[AWSTag]] = None,
     ) -> dict[str, str]:
         """
-        Create a parameter in AWS in the set group.
+        Wrapper around the boto3 ssm put_parameter function.
 
         AWS Docs: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ssm/client/put_parameter.html
 
-        :param parameter: The Manager will store the value under the set group and parameter, if a group is set upon initialization. Allowed characters: a-zA-Z0-9_.-
-        :param value: The value that should be stored. Standard parameters have a value limit of 4 KB. Advanced parameters have a value limit of 8 KB.
-        :param parameter_type: Set the parameter type. Options: "String" | "StringList" | "SecureString", default = "String"
-        :param tier: Set the tier option for the parameter. Options: "Standard" | "Advanced", default = "Standard"
-        :param description: (optional)
-        :param encryption_key_id: (optional) Set the KMS id if using parameter_type "SecureString". If not set, the default key is used.
-        :param tags: (optional) Set optional AWS tags. Use a list with dicts in the format of AWSTag {"Key": ..., "Value": ...}.
+        :param overwrite:
+        :param parameter:
+        :param value:
+        :param parameter_type:
+        :param tier:
+        :param description:
+        :param encryption_key_id:
+        :param tags:
         :return:
         """
         self._validate_string(parameter)
         request_params: dict[str, bool | str | list[AWSTag]] = {
-            "Overwrite": False,
+            "Overwrite": overwrite,
             "Name": self._build_path(parameter),
             "Value": value,
             "Type": parameter_type,
@@ -139,6 +141,60 @@ class ParameterStoreManager:
             raise ParameterAlreadyExists(parameter, self.group)
 
         return {parameter: value}
+
+    def create_parameter(
+        self,
+        parameter: str,
+        value: str,
+        parameter_type: Literal["String", "StringList", "SecureString"] = "String",
+        tier: Literal["Standard", "Advanced"] = "Standard",
+        description: Optional[str] = None,
+        encryption_key_id: Optional[str] = None,
+        tags: Optional[list[AWSTag]] = None,
+    ) -> dict[str, str]:
+        """
+        Create a parameter in AWS in the set group.
+
+        :param parameter: The Manager will store the value under the set group and parameter, if a group is set upon initialization. Allowed characters: a-zA-Z0-9_.-
+        :param value: The value that should be stored. Standard parameters have a value limit of 4 KB. Advanced parameters have a value limit of 8 KB.
+        :param parameter_type: Set the parameter type. Options: "String" | "StringList" | "SecureString", default = "String"
+        :param tier: Set the tier option for the parameter. Options: "Standard" | "Advanced", default = "Standard"
+        :param description: (optional)
+        :param encryption_key_id: (optional) Set the KMS id if using parameter_type "SecureString". If not set, the default key is used.
+        :param tags: (optional) Set optional AWS tags. Use a list with dicts in the format of AWSTag {"Key": ..., "Value": ...}.
+        :return:
+        """
+        return self._put_parameter(
+            overwrite=False,
+            parameter=parameter,
+            value=value,
+            parameter_type=parameter_type,
+            tier=tier,
+            description=description,
+            encryption_key_id=encryption_key_id,
+            tags=tags,
+        )
+
+    def update_parameter(
+        self,
+        parameter: str,
+        value: str,
+        parameter_type: Literal["String", "StringList", "SecureString"] = "String",
+        tier: Literal["Standard", "Advanced"] = "Standard",
+        description: Optional[str] = None,
+        encryption_key_id: Optional[str] = None,
+        tags: Optional[list[AWSTag]] = None,
+    ) -> dict[str, str]:
+        return self._put_parameter(
+            overwrite=True,
+            parameter=parameter,
+            value=value,
+            parameter_type=parameter_type,
+            tier=tier,
+            description=description,
+            encryption_key_id=encryption_key_id,
+            tags=tags,
+        )
 
     def get_group_parameters(self) -> dict:
         """

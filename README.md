@@ -1,4 +1,4 @@
-# AWS Parameter store manager
+# AWS environment store manager
 
 This python library makes interactions with the AWS Parameter Store easier by providing a Management class
 that bundles CRUD operations for hierarchical parameters. At its core it just wraps boto3 functions into
