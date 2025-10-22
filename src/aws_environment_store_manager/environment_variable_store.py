@@ -1,0 +1,2 @@
+class EnvironmentVariableManager:
+    pass
