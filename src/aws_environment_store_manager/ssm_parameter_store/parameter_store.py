@@ -6,7 +6,12 @@ import boto3
 
 from .decorators import clean_and_validate_string
 from .exceptions import ParameterAlreadyExists, ParameterNotFoundError
-from .models import AWSTag, ParameterResponse, ParametersByPathResponse
+from .models import (
+    AWSTag,
+    ParameterResponse,
+    ParametersByPathResponse,
+    DeleteParametersResponse,
+)
 
 
 class ParameterStore:
@@ -24,6 +29,10 @@ class ParameterStore:
         self.client = boto3.client("ssm", region_name=region)
         self.clean_string = clean_string
 
+    ###################
+    # Read operations #
+    ###################
+
     @clean_and_validate_string
     def get_parameter(self, parameter: str) -> ParameterResponse | None:
         """
@@ -39,7 +48,7 @@ class ParameterStore:
         except self.client.exceptions.ParameterNotFound:
             return None
 
-        return ParameterResponse(**response)
+        return ParameterResponse.model_validate(response)
 
     @clean_and_validate_string
     def get_parameter_value(self, parameter: str) -> str | None:
@@ -72,7 +81,7 @@ class ParameterStore:
         response = self.client.get_parameters_by_path(
             Path=path, Recursive=recursive, WithDecryption=True
         )
-        return ParametersByPathResponse(**response)
+        return ParametersByPathResponse.model_validate(response)
 
     @clean_and_validate_string
     def get_parameters_by_path_as_dict(
@@ -89,6 +98,10 @@ class ParameterStore:
         """
         response = self.get_parameters_by_path(path, recursive)
         return {param.Name: param.Value for param in response.Parameters}
+
+    ####################
+    # Write operations #
+    ####################
 
     @clean_and_validate_string
     def _put_parameter(
@@ -128,7 +141,9 @@ class ParameterStore:
             request_params["Description"] = description
         if tags:
             # Validate tag input
-            tags = [AWSTag(**tag) if isinstance(tag, dict) else tag for tag in tags]
+            tags = [
+                AWSTag.model_validate(tag) if isinstance(tag, dict) else tag for tag in tags
+            ]
             request_params["Tags"] = [tag.model_dump() for tag in tags]
         if encryption_key_id:
             request_params["KeyId"] = encryption_key_id
@@ -244,3 +259,27 @@ class ParameterStore:
             encryption_key_id=encryption_key_id,
             tags=tags,
         )
+
+    @clean_and_validate_string
+    def delete_parameter(self, parameter: str) -> None:
+        """
+        Delete a parameter store entry in AWS.
+
+        :param parameter: The Manager will store the value under the set group and parameter, if a group is set upon initialization. Allowed characters: a-zA-Z0-9_.-
+        :return: None
+        """
+        try:
+            self.client.delete_parameter(Name=parameter)
+        except self.client.exceptions.ParameterNotFound:
+            raise ParameterNotFoundError(parameter)
+
+    @clean_and_validate_string
+    def delete_parameters(self, parameters: list[str]) -> DeleteParametersResponse:
+        """
+        Delete multiple parameter store entries in AWS.
+
+        :param parameters: The Manager will store the value under the set group and parameter, if a group is set upon initialization. Allowed characters: a-zA-Z0-9_.-
+        :return: None
+        """
+        response = self.client.delete_parameters(Names=parameters)
+        return DeleteParametersResponse.model_validate(response)

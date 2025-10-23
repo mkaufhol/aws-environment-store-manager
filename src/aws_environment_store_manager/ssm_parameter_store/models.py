@@ -24,3 +24,8 @@ class ParameterResponse(BaseModel):
 
 class ParametersByPathResponse(BaseModel):
     Parameters: list[Parameter]
+
+
+class DeleteParametersResponse(BaseModel):
+    DeletedParameters: list[str]
+    InvalidParameters: list[str]

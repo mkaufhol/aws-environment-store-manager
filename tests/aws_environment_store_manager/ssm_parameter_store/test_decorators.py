@@ -607,3 +607,239 @@ class TestCleanAndValidateStringDecorator:
         # Valid absolute path should work
         result = TestClass.test_method("/valid/path")
         assert result == "/valid/path"
+
+
+class TestCleanAndValidateStringDecoratorWithLists:
+    """Test suite for clean_and_validate_string decorator with list parameters."""
+
+    def test_decorator_cleans_list_of_parameters_with_clean_string_true(self):
+        """Test that decorator cleans list of parameters when clean_string=True."""
+
+        class TestClass:
+            def __init__(self):
+                self.clean_string = True
+
+            @clean_and_validate_string
+            def test_method(self, parameters: list[str]) -> list[str]:
+                return parameters
+
+        obj = TestClass()
+        # Test list with relative paths
+        result = obj.test_method(["path/to/param1", "path/to/param2", "path/to/param3"])
+        assert result == ["/path/to/param1", "/path/to/param2", "/path/to/param3"]
+
+    def test_decorator_validates_list_of_parameters(self):
+        """Test that decorator validates each parameter in the list."""
+
+        class TestClass:
+            def __init__(self):
+                self.clean_string = True
+
+            @clean_and_validate_string
+            def test_method(self, parameters: list[str]) -> list[str]:
+                return parameters
+
+        obj = TestClass()
+        # Test list with invalid characters
+        with pytest.raises(ValueError) as exc_info:
+            obj.test_method(["/valid/path", "/invalid@path"])
+        assert "Illegal characters:" in str(exc_info.value)
+
+    def test_decorator_with_empty_list(self):
+        """Test that decorator handles empty list correctly."""
+
+        class TestClass:
+            def __init__(self):
+                self.clean_string = True
+
+            @clean_and_validate_string
+            def test_method(self, parameters: list[str]) -> list[str]:
+                return parameters
+
+        obj = TestClass()
+        # Empty list should work fine
+        result = obj.test_method([])
+        assert result == []
+
+    def test_decorator_with_single_item_list(self):
+        """Test that decorator handles single-item list correctly."""
+
+        class TestClass:
+            def __init__(self):
+                self.clean_string = True
+
+            @clean_and_validate_string
+            def test_method(self, parameters: list[str]) -> list[str]:
+                return parameters
+
+        obj = TestClass()
+        # Single item list
+        result = obj.test_method(["path/to/param"])
+        assert result == ["/path/to/param"]
+
+    def test_decorator_with_list_of_absolute_paths(self):
+        """Test that decorator handles list of already absolute paths."""
+
+        class TestClass:
+            def __init__(self):
+                self.clean_string = True
+
+            @clean_and_validate_string
+            def test_method(self, parameters: list[str]) -> list[str]:
+                return parameters
+
+        obj = TestClass()
+        # List of absolute paths should remain unchanged
+        result = obj.test_method(["/path/to/param1", "/path/to/param2"])
+        assert result == ["/path/to/param1", "/path/to/param2"]
+
+    def test_decorator_with_list_of_single_part_paths(self):
+        """Test that decorator handles list of single-part paths (no slashes)."""
+
+        class TestClass:
+            def __init__(self):
+                self.clean_string = True
+
+            @clean_and_validate_string
+            def test_method(self, parameters: list[str]) -> list[str]:
+                return parameters
+
+        obj = TestClass()
+        # Single-part paths should remain unchanged
+        result = obj.test_method(["param1", "param2", "param3"])
+        assert result == ["param1", "param2", "param3"]
+
+    def test_decorator_with_list_mixed_path_types(self):
+        """Test that decorator handles list with mixed path types."""
+
+        class TestClass:
+            def __init__(self):
+                self.clean_string = True
+
+            @clean_and_validate_string
+            def test_method(self, parameters: list[str]) -> list[str]:
+                return parameters
+
+        obj = TestClass()
+        # Mix of absolute, relative, and single-part paths
+        result = obj.test_method(["/absolute/path", "relative/path", "single"])
+        assert result == ["/absolute/path", "/relative/path", "single"]
+
+    def test_decorator_with_list_clean_string_false(self):
+        """Test that decorator does not clean list when clean_string=False."""
+
+        class TestClass:
+            def __init__(self):
+                self.clean_string = False
+
+            @clean_and_validate_string
+            def test_method(self, parameters: list[str]) -> list[str]:
+                return parameters
+
+        obj = TestClass()
+        # Should not clean, so relative paths fail validation
+        with pytest.raises(ValueError) as exc_info:
+            obj.test_method(["relative/path"])
+        assert "Invalid pathlike string" in str(exc_info.value)
+
+    def test_decorator_with_list_containing_empty_string(self):
+        """Test that decorator raises error for list containing empty string."""
+
+        class TestClass:
+            def __init__(self):
+                self.clean_string = True
+
+            @clean_and_validate_string
+            def test_method(self, parameters: list[str]) -> list[str]:
+                return parameters
+
+        obj = TestClass()
+        # Empty string in list should raise error
+        with pytest.raises(ValueError) as exc_info:
+            obj.test_method(["/valid/path", ""])
+        assert "String cannot be empty" in str(exc_info.value)
+
+    def test_decorator_with_list_containing_whitespace_only(self):
+        """Test that decorator raises error for list containing whitespace-only string."""
+
+        class TestClass:
+            def __init__(self):
+                self.clean_string = True
+
+            @clean_and_validate_string
+            def test_method(self, parameters: list[str]) -> list[str]:
+                return parameters
+
+        obj = TestClass()
+        # Whitespace-only string in list should raise error
+        with pytest.raises(ValueError) as exc_info:
+            obj.test_method(["/valid/path", "   "])
+        assert "String cannot be empty" in str(exc_info.value)
+
+    def test_decorator_with_list_all_invalid_characters(self):
+        """Test that decorator raises error when all items in list have invalid characters."""
+
+        class TestClass:
+            def __init__(self):
+                self.clean_string = True
+
+            @clean_and_validate_string
+            def test_method(self, parameters: list[str]) -> list[str]:
+                return parameters
+
+        obj = TestClass()
+        # All items with invalid characters
+        with pytest.raises(ValueError) as exc_info:
+            obj.test_method(["/invalid@path1", "/invalid#path2"])
+        assert "Illegal characters:" in str(exc_info.value)
+
+    def test_decorator_with_list_first_item_invalid(self):
+        """Test that decorator catches invalid first item in list."""
+
+        class TestClass:
+            def __init__(self):
+                self.clean_string = True
+
+            @clean_and_validate_string
+            def test_method(self, parameters: list[str]) -> list[str]:
+                return parameters
+
+        obj = TestClass()
+        # First item invalid
+        with pytest.raises(ValueError) as exc_info:
+            obj.test_method(["/invalid@path", "/valid/path"])
+        assert "Illegal characters:" in str(exc_info.value)
+
+    def test_decorator_with_list_last_item_invalid(self):
+        """Test that decorator catches invalid last item in list."""
+
+        class TestClass:
+            def __init__(self):
+                self.clean_string = True
+
+            @clean_and_validate_string
+            def test_method(self, parameters: list[str]) -> list[str]:
+                return parameters
+
+        obj = TestClass()
+        # Last item invalid
+        with pytest.raises(ValueError) as exc_info:
+            obj.test_method(["/valid/path", "/invalid@path"])
+        assert "Illegal characters:" in str(exc_info.value)
+
+    def test_decorator_with_list_middle_item_invalid(self):
+        """Test that decorator catches invalid middle item in list."""
+
+        class TestClass:
+            def __init__(self):
+                self.clean_string = True
+
+            @clean_and_validate_string
+            def test_method(self, parameters: list[str]) -> list[str]:
+                return parameters
+
+        obj = TestClass()
+        # Middle item invalid
+        with pytest.raises(ValueError) as exc_info:
+            obj.test_method(["/valid/path1", "/invalid@path", "/valid/path2"])
+        assert "Illegal characters:" in str(exc_info.value)
