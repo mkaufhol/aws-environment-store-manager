@@ -6,7 +6,7 @@ import boto3
 
 from .decorators import clean_and_validate_string
 from .exceptions import ParameterAlreadyExists, ParameterNotFoundError
-from .typing import AWSTag, ParameterResponse
+from .models import AWSTag, ParameterResponse
 
 
 class ParameterStore:
@@ -39,7 +39,7 @@ class ParameterStore:
         except self.client.exceptions.ParameterNotFound:
             return None
 
-        return response
+        return ParameterResponse(**response)
 
     @clean_and_validate_string
     def get_parameter_value(self, parameter: str) -> str | None:
@@ -52,7 +52,7 @@ class ParameterStore:
         :return: The Value of the parameter of set group if exists, else None
         """
         parameter_dict = self.get_parameter(parameter)
-        return parameter_dict["Parameter"]["Value"]
+        return parameter_dict.Parameter.Value
 
     @clean_and_validate_string
     def _put_parameter(
@@ -64,7 +64,7 @@ class ParameterStore:
         tier: Literal["Standard", "Advanced"] = "Standard",
         description: Optional[str] = None,
         encryption_key_id: Optional[str] = None,
-        tags: Optional[list[AWSTag]] = None,
+        tags: Optional[list[AWSTag | dict[str, str]]] = None,
     ) -> dict[str, str]:
         """
         Wrapper around the boto3 ssm put_parameter function.
@@ -81,7 +81,7 @@ class ParameterStore:
         :param tags:
         :return:
         """
-        request_params: dict[str, bool | str | list[AWSTag]] = {
+        request_params: dict[str, bool | str | list[AWSTag | dict[str, str]]] = {
             "Overwrite": overwrite,
             "Name": parameter,
             "Value": value,
@@ -91,7 +91,9 @@ class ParameterStore:
         if description:
             request_params["Description"] = description
         if tags:
-            request_params["Tags"] = tags
+            # Validate tag input
+            tags = [AWSTag(**tag) if isinstance(tag, dict) else tag for tag in tags]
+            request_params["Tags"] = [tag.model_dump() for tag in tags]
         if encryption_key_id:
             request_params["KeyId"] = encryption_key_id
 
@@ -111,7 +113,7 @@ class ParameterStore:
         tier: Literal["Standard", "Advanced"] = "Standard",
         description: Optional[str] = None,
         encryption_key_id: Optional[str] = None,
-        tags: Optional[list[AWSTag]] = None,
+        tags: Optional[list[AWSTag | dict[str, str]]] = None,
     ) -> dict[str, str]:
         """
         Create a parameter store entry in AWS. This method ensures that the parameter does not already exist.
@@ -145,7 +147,7 @@ class ParameterStore:
         tier: Literal["Standard", "Advanced"] = "Standard",
         description: Optional[str] = None,
         encryption_key_id: Optional[str] = None,
-        tags: Optional[list[AWSTag]] = None,
+        tags: Optional[list[AWSTag | dict[str, str]]] = None,
     ) -> dict[str, str]:
         """
         Update a parameter store entry in AWS. If the parameter does not exist, it will be created.
@@ -179,7 +181,7 @@ class ParameterStore:
         tier: Literal["Standard", "Advanced"] = "Standard",
         description: Optional[str] = None,
         encryption_key_id: Optional[str] = None,
-        tags: Optional[list[AWSTag]] = None,
+        tags: Optional[list[AWSTag | dict[str, str]]] = None,
     ) -> dict[str, str]:
         """
         Update a parameter store entry in AWS only if it exists.
