@@ -16,14 +16,20 @@ def clean_and_validate_string(func):
             class_instance = bound_args.arguments["self"]
             should_clean = getattr(class_instance, "clean_string", False)
 
-        if "parameter" in bound_args.arguments:
-            param_value = bound_args.arguments["parameter"]
-            if isinstance(param_value, str) and should_clean:
-                bound_args.arguments["parameter"] = make_string_parameter_store_compatible(
-                    param_value
-                )
+        params_to_clean = [
+            "parameter",
+            "path",
+        ]
 
-            validate_string(bound_args.arguments["parameter"])
+        for func_param in params_to_clean:
+            if func_param in bound_args.arguments:
+                param_value = bound_args.arguments[func_param]
+                if isinstance(param_value, str) and should_clean:
+                    bound_args.arguments[func_param] = make_string_parameter_store_compatible(
+                        param_value
+                    )
+
+                validate_string(bound_args.arguments[func_param])
 
         return func(*bound_args.args, **bound_args.kwargs)
 

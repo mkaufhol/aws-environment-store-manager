@@ -6,7 +6,7 @@ import boto3
 
 from .decorators import clean_and_validate_string
 from .exceptions import ParameterAlreadyExists, ParameterNotFoundError
-from .models import AWSTag, ParameterResponse
+from .models import AWSTag, ParameterResponse, ParametersByPathResponse
 
 
 class ParameterStore:
@@ -27,7 +27,7 @@ class ParameterStore:
     @clean_and_validate_string
     def get_parameter(self, parameter: str) -> ParameterResponse | None:
         """
-        Get the raw parameter response from the set group.
+        Get the raw parameter response.
 
         AWS Docs: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ssm/client/get_parameter.html
 
@@ -44,15 +44,51 @@ class ParameterStore:
     @clean_and_validate_string
     def get_parameter_value(self, parameter: str) -> str | None:
         """
-        Get a parameter from the set group.
+        Get a parameter value.
 
         AWS Docs: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ssm/client/get_parameter.html
 
         :param parameter: Parameter Name
-        :return: The Value of the parameter of set group if exists, else None
+        :return: The Value of the parameter, else None
         """
         parameter_dict = self.get_parameter(parameter)
+        if not parameter_dict:
+            return None
         return parameter_dict.Parameter.Value
+
+    @clean_and_validate_string
+    def get_parameters_by_path(
+        self, path: str, recursive: bool = False
+    ) -> ParametersByPathResponse:
+        """
+        Get parameters by path.
+
+        AWS Docs: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ssm/client/get_parameters_by_path.html
+
+        :param path: Parameter Path
+        :param recursive: If set to True, the path will be searched recursively and all parameters below the path will be returned.
+        :return: The fetched parameters as a ParametersByPathResponse object.
+        """
+        response = self.client.get_parameters_by_path(
+            Path=path, Recursive=recursive, WithDecryption=True
+        )
+        return ParametersByPathResponse(**response)
+
+    @clean_and_validate_string
+    def get_parameters_by_path_as_dict(
+        self, path: str, recursive: bool = False
+    ) -> dict[str, str]:
+        """
+        Get parameters by path as a dict.
+
+        AWS Docs: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ssm/client/get_parameters_by_path.html
+
+        :param path: Parameter Path
+        :param recursive: If set to True, the path will be searched recursively and all parameters below the path will be returned.
+        :return: The fetched parameters as a dict with the parameter name as key and the value as value.
+        """
+        response = self.get_parameters_by_path(path, recursive)
+        return {param.Name: param.Value for param in response.Parameters}
 
     @clean_and_validate_string
     def _put_parameter(

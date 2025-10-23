@@ -20,3 +20,7 @@ class Parameter(BaseModel):
 
 class ParameterResponse(BaseModel):
     Parameter: Parameter
+
+
+class ParametersByPathResponse(BaseModel):
+    Parameters: list[Parameter]

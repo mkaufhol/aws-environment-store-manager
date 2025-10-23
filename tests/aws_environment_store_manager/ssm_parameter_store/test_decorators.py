@@ -18,6 +18,16 @@ class TestCleanAndValidateStringDecorator:
         result = test_func("/valid/parameter")
         assert result == "processed: /valid/parameter"
 
+    def test_decorator_on_function_with_path_parameter(self):
+        """Test decorator on a standalone function with 'path' parameter."""
+
+        @clean_and_validate_string
+        def test_func(path: str) -> str:
+            return f"processed: {path}"
+
+        result = test_func("/valid/path")
+        assert result == "processed: /valid/path"
+
     def test_decorator_on_function_validates_parameter(self):
         """Test that decorator validates the parameter on standalone functions."""
 
