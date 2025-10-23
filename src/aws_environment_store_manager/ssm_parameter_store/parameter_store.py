@@ -1,3 +1,7 @@
+"""
+This module provides a wrapper around the boto3 ssm client to make interactions with the AWS Parameter Store easier.
+"""
+
 from __future__ import annotations
 
 from typing import Optional, Literal
